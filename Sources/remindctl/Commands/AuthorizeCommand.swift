@@ -18,9 +18,27 @@ enum AuthorizeCommand {
       let store = RemindersStore()
       let current = RemindersStore.authorizationStatus()
       let status: RemindersAuthorizationStatus
-      if current == .notDetermined {
+
+      switch current {
+      case .notDetermined:
         status = try await store.requestAuthorization()
-      } else {
+      case .denied, .restricted:
+        // macOS caches the denial — re-requesting won't show the prompt
+        OutputRenderer.printAuthorizationStatus(current, format: runtime.outputFormat)
+        if runtime.outputFormat == .standard {
+          fputs("""
+
+            Access was previously denied. macOS will not show the prompt again.
+            To fix this manually:
+              1. Open System Settings > Privacy & Security > Reminders
+              2. Find Terminal (or your terminal app) in the list
+              3. Toggle it ON
+              4. Re-run: remindctl authorize
+
+            """, stderr)
+        }
+        throw RemindCoreError.accessDenied
+      default:
         status = current
       }
 
