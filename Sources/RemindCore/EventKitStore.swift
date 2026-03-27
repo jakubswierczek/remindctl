@@ -104,6 +104,12 @@ public actor RemindersStore {
       reminder.dueDateComponents = calendarComponents(from: dueDate.date, dateOnly: dueDate.isDateOnly)
     }
     try eventStore.save(reminder, commit: true)
+
+    // verify the reminder was persisted (EventKit can silently drop saves)
+    guard eventStore.calendarItem(withIdentifier: reminder.calendarItemIdentifier) != nil else {
+      throw RemindCoreError.operationFailed("Reminder was not saved — check Reminders permissions in System Settings > Privacy & Security > Reminders")
+    }
+
     return item(from: reminder)
   }
 
@@ -135,7 +141,21 @@ public actor RemindersStore {
 
     try eventStore.save(reminder, commit: true)
 
-    return item(from: reminder)
+    // re-fetch to verify changes persisted (EventKit can silently drop updates)
+    let refetched = try self.reminder(withID: id)
+    if let dueDateUpdate = update.dueDate {
+      if dueDateUpdate != nil {
+        guard refetched.dueDateComponents != nil else {
+          throw RemindCoreError.operationFailed("Due date update was not saved — the reminder may be read-only")
+        }
+      } else {
+        guard refetched.dueDateComponents == nil else {
+          throw RemindCoreError.operationFailed("Due date clear was not saved — the reminder may be read-only")
+        }
+      }
+    }
+
+    return item(from: refetched)
   }
 
   public func completeReminders(ids: [String]) async throws -> [ReminderItem] {
