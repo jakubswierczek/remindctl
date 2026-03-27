@@ -178,6 +178,7 @@ public actor RemindersStore {
       let notes: String?
       let isCompleted: Bool
       let completionDate: Date?
+      let creationDate: Date?
       let priority: Int
       let dueDateComponents: DateComponents?
       let listID: String
@@ -194,6 +195,7 @@ public actor RemindersStore {
             notes: reminder.notes,
             isCompleted: reminder.isCompleted,
             completionDate: reminder.completionDate,
+            creationDate: reminder.creationDate,
             priority: Int(reminder.priority),
             dueDateComponents: reminder.dueDateComponents,
             listID: reminder.calendar.calendarIdentifier,
@@ -211,6 +213,7 @@ public actor RemindersStore {
         notes: data.notes,
         isCompleted: data.isCompleted,
         completionDate: data.completionDate,
+        creationDate: data.creationDate,
         priority: ReminderPriority(eventKitValue: data.priority),
         dueDate: date(from: data.dueDateComponents),
         listID: data.listID,
@@ -250,6 +253,7 @@ public actor RemindersStore {
       notes: reminder.notes,
       isCompleted: reminder.isCompleted,
       completionDate: reminder.completionDate,
+      creationDate: reminder.creationDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
       listID: reminder.calendar.calendarIdentifier,
