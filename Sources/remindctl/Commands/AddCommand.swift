@@ -17,6 +17,7 @@ enum AddCommand {
             .make(label: "title", names: [.long("title")], help: "Reminder title", parsing: .singleValue),
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
+            .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Alarm date (defaults to due date)", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
             .make(
               label: "tag",
@@ -63,10 +64,12 @@ enum AddCommand {
       let listName = values.option("list")
       let notes = values.option("notes")
       let dueValue = values.option("due")
+      let alarmValue = values.option("alarm")
       let priorityValue = values.option("priority")
       let tagValues = values.optionValues("tag")
 
       let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
+      let alarmDate = try alarmValue.map { try CommandHelpers.parseDueDate($0).date }
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
       let tags = try CommandHelpers.parseTags(tagValues)
       let parsedTitle = CommandHelpers.parseTitleTags(title)
@@ -86,7 +89,7 @@ enum AddCommand {
         throw RemindCoreError.operationFailed("No default list found. Specify --list.")
       }
 
-      let draft = ReminderDraft(title: titleWithTags, notes: notes, dueDate: dueDate, priority: priority)
+      let draft = ReminderDraft(title: titleWithTags, notes: notes, dueDate: dueDate, alarmDate: alarmDate, priority: priority)
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }
