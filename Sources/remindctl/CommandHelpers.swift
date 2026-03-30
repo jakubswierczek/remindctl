@@ -77,6 +77,39 @@ enum CommandHelpers {
     return "\(baseTitle) \(normalized)"
   }
 
+  static func parseRecurrence(_ value: String) throws -> RecurrenceRule {
+    let lower = value.lowercased().trimmingCharacters(in: .whitespaces)
+    switch lower {
+    case "daily":
+      return RecurrenceRule(frequency: .daily, interval: 1)
+    case "weekly":
+      return RecurrenceRule(frequency: .weekly, interval: 1)
+    case "biweekly":
+      return RecurrenceRule(frequency: .weekly, interval: 2)
+    case "monthly":
+      return RecurrenceRule(frequency: .monthly, interval: 1)
+    case "yearly":
+      return RecurrenceRule(frequency: .yearly, interval: 1)
+    default:
+      let pattern = #/^every\s+(\d+)\s+(days?|weeks?|months?|years?)$/#
+      if let match = lower.firstMatch(of: pattern) {
+        guard let n = Int(match.1), n > 0 else {
+          throw RemindCoreError.operationFailed("Invalid repeat interval: \"\(value)\"")
+        }
+        let unit = String(match.2)
+        let freq: RecurrenceFrequency
+        if unit.hasPrefix("day") { freq = .daily }
+        else if unit.hasPrefix("week") { freq = .weekly }
+        else if unit.hasPrefix("month") { freq = .monthly }
+        else { freq = .yearly }
+        return RecurrenceRule(frequency: freq, interval: n)
+      }
+      throw RemindCoreError.operationFailed(
+        "Invalid repeat value: \"\(value)\" (use daily|weekly|biweekly|monthly|yearly or \"every N days/weeks/months/years\")"
+      )
+    }
+  }
+
   static func mergeTags(existing: [String], add: [String], remove: [String], clear: Bool) -> [String] {
     var current = clear ? [] : existing
 

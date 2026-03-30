@@ -31,6 +31,12 @@ enum AddCommand {
               help: "none|low|medium|high",
               parsing: .singleValue
             ),
+            .make(
+              label: "repeat",
+              names: [.short("r"), .long("repeat")],
+              help: "daily|weekly|biweekly|monthly|yearly|every N days/weeks/months",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -71,6 +77,8 @@ enum AddCommand {
       let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
       let alarmDate = try alarmValue.map { try CommandHelpers.parseDueDate($0).date }
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
+      let repeatValue = values.option("repeat")
+      let recurrenceRule = try repeatValue.map(CommandHelpers.parseRecurrence)
       let tags = try CommandHelpers.parseTags(tagValues)
       let parsedTitle = CommandHelpers.parseTitleTags(title)
       let mergedTags = CommandHelpers.mergeTags(existing: parsedTitle.tags, add: tags, remove: [], clear: false)
@@ -89,7 +97,7 @@ enum AddCommand {
         throw RemindCoreError.operationFailed("No default list found. Specify --list.")
       }
 
-      let draft = ReminderDraft(title: titleWithTags, notes: notes, dueDate: dueDate, alarmDate: alarmDate, priority: priority)
+      let draft = ReminderDraft(title: titleWithTags, notes: notes, dueDate: dueDate, alarmDate: alarmDate, priority: priority, recurrenceRule: recurrenceRule)
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }

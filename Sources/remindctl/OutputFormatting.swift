@@ -37,6 +37,7 @@ struct ReminderOutput: Codable, Sendable, Equatable {
   let priority: ReminderPriority
   let dueDate: Date?
   let dueDateIsAllDay: Bool
+  let recurrenceRule: RecurrenceRule?
   let listID: String
   let listName: String
 
@@ -52,6 +53,7 @@ struct ReminderOutput: Codable, Sendable, Equatable {
     priority = reminder.priority
     dueDate = reminder.dueDate
     dueDateIsAllDay = reminder.dueDateIsAllDay
+    recurrenceRule = reminder.recurrenceRule
     listID = reminder.listID
     listName = reminder.listName
   }
@@ -91,7 +93,8 @@ enum OutputRenderer {
         reminder.dueDate.map {
           DateParsing.formatDisplay($0, isDateOnly: reminder.dueDateIsAllDay)
         } ?? "no due date"
-      Swift.print("✓ \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)")
+      let recur = reminder.recurrenceRule.map { " (repeats \($0.displayString))" } ?? ""
+      Swift.print("✓ \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(recur)")
     case .plain:
       Swift.print(plainLine(for: reminder))
     case .json:
@@ -162,7 +165,8 @@ enum OutputRenderer {
           DateParsing.formatDisplay($0, isDateOnly: reminder.dueDateIsAllDay)
         } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
-      Swift.print("[\(index + 1)] [\(status)] \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(priority)")
+      let recur = reminder.recurrenceRule.map { " (repeats \($0.displayString))" } ?? ""
+      Swift.print("[\(index + 1)] [\(status)] \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(priority)\(recur)")
     }
   }
 
